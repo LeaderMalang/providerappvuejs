@@ -19,7 +19,7 @@
               <label class="mr-4 ml-0">Gender: </label><span v-if="this.contactDetails.content.gender">{{ this.contactDetails.content.gender  }}</span>
             </b-col>
             <b-col md="6">
-              <!--                <label class="mr-4 ml-0">Customer Type: </label><span v-if="this.infoModal.content.contact_type">{{ this.infoModal.content.contact_type }}</span>-->
+              <label class="mr-4 ml-0">Country: </label><span>{{ this.contactDetails.content.country  }}</span>
             </b-col>
           </b-row>
           <b-row>
@@ -44,12 +44,6 @@
             </b-col>
             <b-col md="6">
               <label class="mr-4 ml-0">State: </label><span>{{ this.contactDetails.content.state  }}</span>
-            </b-col>
-          </b-row>
-          <b-row>
-
-            <b-col md="6">
-              <label class="mr-4 ml-0">Country: </label><span>{{ this.contactDetails.content.country  }}</span>
             </b-col>
           </b-row>
         </b-card>

@@ -1,7 +1,7 @@
 <template>
 
   <b-card
-    header="Appointment List"
+    header="Provider List"
     header-tag="header"
   >
     <b-container fluid>
@@ -18,7 +18,7 @@
               v-model="filter"
               class="col-sm-6 col-lg-4 col-md-7"
               type="search"
-              @input="getAppointmentData(currentPage, perPage, filter)"
+              @input="getDataList(currentPage, perPage, filter)"
               placeholder="Type to Search"
             ></b-form-input>
 
@@ -29,8 +29,7 @@
         </b-form-group>
       </b-col>
       <b-col lg="6" md="12" sm="12">
-<!--        <AddAppointmentDefault ref="form" @my-custom-event="getAppointmentData(currentPage, perPage, filter)" ></AddAppointmentDefault>-->
-<!--        <b-button v-b-modal.modal-1 class="btn btn-primary float-right">Add Appointment</b-button>-->
+        <AddProvider ref="form" :api-key-parent='apiKey' @my-custom-event="getDataList(currentPage, perPage, filter)" ></AddProvider>
       </b-col>
     </div>
   <div class="mt-5 table-responsive-sm">
@@ -54,14 +53,14 @@
       <tr v-if="items != [] && showLoader == false" v-for="item in items" :key="item.id">
         <td>{{ item.id }}</td>
         <td>
-          <b-btn variant="link" @click="getcontactDetails(item.id)" class="btn-link" >{{ item.name }}</b-btn>
+          <b-btn variant="link" @click="getsingleDetails(item.id)" class="btn-link" >{{ item.name }}</b-btn>
         </td>
         <td>{{ item.email }}</td>
         <td>{{ item.phone }}</td>
         <td>{{ item.city }}</td>
         <td>
-          <b-button size="sm" @click="info(item, $event.target)" class="btn btn-sm btn-primary mr-1">
-            <i class="fa fa-eye"></i>
+          <b-button size="sm" @click="editInfo(item)" class="btn btn-sm btn-primary mr-1">
+            <i class="fa fa-edit"></i>
           </b-button>
           <b-button size="sm" @click="deleteItem(item)" class="btn btn-sm btn-danger">
             <i class="fa fa-trash"></i>
@@ -83,7 +82,7 @@
             <b-form-select
               id="per-page-select"
               v-model="perPage"
-              @change="getAppointmentData(1, perPage, filter)"
+              @change="getDataList(1, perPage, filter)"
               :options="pageOptions"
               size="md"
             ></b-form-select>
@@ -97,13 +96,13 @@
           <nav aria-label="Page navigation">
             <ul class="pagination justify-content-end">
               <li class="page-item" v-show="page != 1">
-                <a class="page-link btn" @click="getAppointmentData(page-1, perPage, filter)" tabindex="-1">Previous</a>
+                <a class="page-link btn" @click="getDataList(page-1, perPage, filter)" tabindex="-1">Previous</a>
               </li>
               <li class="page-item" :key="pageNumber" v-for="pageNumber in allPages" >
-                <a class="page-link" :data-id='pageNumber' :class="(page == pageNumber) ? 'activbtn' : ''" @click="getAppointmentData(pageNumber, perPage, filter)">{{pageNumber}}</a>
+                <a class="page-link" :data-id='pageNumber' :class="(page == pageNumber) ? 'activbtn' : ''" @click="getDataList(pageNumber, perPage, filter)">{{pageNumber}}</a>
               </li>
               <li class="page-item" v-if="page != totalPages">
-                <a class="page-link" @click="getAppointmentData(page+1, perPage, filter)" >Next</a>
+                <a class="page-link" @click="getDataList(page+1, perPage, filter)" >Next</a>
               </li>
             </ul>
           </nav>
@@ -111,18 +110,11 @@
         </div>
       </div>
     </div>
-<!--    Model For Rescdule-->
-<!--  <b-modal size="lg" :id="infoModal.id" :title="infoModal.title" ok-only @hide="resetInfoModal">-->
-<!--  <AppointmentModel :info-modal="infoModal" :show-model-loader="showModelLoader"></AppointmentModel>-->
-<!--  </b-modal>-->
+
   <!--    This model is to show contact Details-->
   <b-modal  size="lg" :id="contactDetails.id" :title="contactDetails.content.name" ok-only @hide="resetcontactDetails">
-  <ContactDetailsModel :contact-details="contactDetails" :show-model-loader="showModelLoader"></ContactDetailsModel>
+  <ContactDetailsModel  :contact-details="contactDetails" :show-model-loader="showModelLoader"></ContactDetailsModel>
   </b-modal>
-  <!--    End contact Details Model-->
-<!--  <b-modal  size="lg" id="ArrayModel1" ok-only @hide="resetcontactDetails">-->
-<!--    <ArrayModel :first-array="firstArray" :firstTitle="firstArray.title" :show-model-loader="showModelLoader"></ArrayModel>-->
-<!--  </b-modal>-->
   </b-card>
 </template>
 
@@ -130,19 +122,14 @@
 import axios from 'axios'
 import 'vue-select/dist/vue-select.css'
 import Loader from './Loader.vue'
-import AppointmentModel from './AppointmentModel.vue'
 import ContactDetailsModel from './ContactDetailsModel'
-import ArrayModel from './ArrayModel'
-import AddAppointmentDefault from './AddAppointment'
-// import AddAppointmentDefault from 'add-appointment'
+import AddProvider from './AddProvider'
 
 export default {
   name: 'Home',
   components: {
-    ArrayModel,
     Loader,
-    AppointmentModel,
-    AddAppointmentDefault,
+    AddProvider,
     ContactDetailsModel
   },
   data () {
@@ -150,7 +137,7 @@ export default {
       errors: [],
       firstArray: [],
       success: '',
-      apiKey: '51494738-e6c1-48e0-b4e8-18491abb4192',
+      apiKey: '',
       msg: '',
       allPages: 0,
       showModal: false,
@@ -165,19 +152,13 @@ export default {
       disableNext: false,
       disablePrevious: false,
       sortBy: '',
-      appointmentstatus: [],
-      appointmentstatusid: '',
+      baseUrlLive: 'https://evergenius.staging.wishpond.com/',
+      baseUrlLocal: 'http://localhost:3000/',
       sortDesc: false,
       sortDirection: 'asc',
       filter: null,
-      appointment_id: '',
       showLoader: false,
       showModelLoader: false,
-      infoModal: {
-        id: 'info-modal',
-        title: '',
-        content: ''
-      },
       contactDetails: {
         id: 'contactDetails-modal',
         title: '',
@@ -202,20 +183,13 @@ export default {
     }
   },
   created () {
-    // axios.get('https://app.evergenius.com/api/appointments/appointmentstatus', {
-    //   params: {auth_key: this.apiKey}
-    // })
-    //   .then(response => {
-    //     var res = response.data.data.appointmentstatus
-    //     res.forEach(this.sortlist)
-    //   })
-    //   .catch(e => {
-    //     this.errors.push(e)
-    //   })
-    this.getAppointmentData(this.currentPage, this.perPage, this.filter)
+    let uri = window.location.href.split('?')
+    uri = uri[1].split('=')
+    this.apiKey = uri[1]
+    this.getDataList(this.currentPage, this.perPage, this.filter)
   },
   methods: {
-    getAppointmentData (page, perPage, filter = '') {
+    getDataList (page, perPage, filter = '') {
       this.page = page
       this.currentPage = page
       var start = 0
@@ -224,7 +198,8 @@ export default {
       }
       var pPage = this.perPage
       this.showLoader = true
-      axios.post('https://app.evergenius.com/api/users', {
+      var url = this.baseUrlLive + 'api/users'
+      axios.post(url, {
         auth_key: this.apiKey,
         columns: [{data: 'id', name: '', orderable: true, search: { value: '', regex: false }, searchable: true},
           {data: null, name: '', orderable: true, search: { value: '', regex: false }, searchable: true},
@@ -237,7 +212,6 @@ export default {
         search: { value: filter, regex: false }
       })
         .then(response => {
-          console.log(response)
           this.items = response.data.data
           this.showLoader = false
           this.totalRows = response.data.recordsTotal
@@ -251,32 +225,8 @@ export default {
           this.dataPages()
         })
     },
-    info (item, button) {
-      var url = 'https://app.evergenius.com/api/appointments/show/' + item.id
-      this.showModelLoader = true
-      this.$root.$emit('bv::show::modal', this.infoModal.id, button)
-      axios.get(url, {
-        params: {auth_key: this.apiKey}
-      })
-        .then(response => {
-          this.infoModal.content = response.data.data
-          if (this.infoModal.contacts) {
-            this.infoModal.title = this.infoModal.contacts[0].name
-          } else {
-            this.infoModal.title = ''
-          }
-          this.showModelLoader = false
-        })
-        .catch(e => {
-          this.errors.push(e)
-        })
-    },
-    resetInfoModal () {
-      this.infoModal.title = ''
-      this.infoModal.content = ''
-    },
-    getcontactDetails (contactid) {
-      var url = 'https://app.evergenius.com/api/users/show/' + contactid
+    getsingleDetails (contactid) {
+      var url = this.baseUrlLive + 'api/users/show/' + contactid
       this.showModelLoader = true
       axios.get(url, {
         params: {auth_key: this.apiKey}
@@ -299,52 +249,25 @@ export default {
       this.contactDetails.title = ''
       this.contactDetails.content = ''
     },
+    editInfo (item) {
+      this.$refs.form.editForm(item.id)
+    },
     deleteItem (item) {
-      this.$confirm('Are you sure You want to Delete Appointment?').then(() => {
-        var url = 'https://app.evergenius.com/api/appointments/appointment/' + item.id
+      this.$confirm('Are you sure You want to Delete Provider?').then(() => {
+        var url = this.baseUrlLive + 'api/users/user/' + item.id
         axios.delete(url, {
           params: {
-            auth_key: this.apiKey,
-            id: item.id
+            auth_key: this.apiKey
           }
         })
           .then(response => {
-            this.getAppointmentData(this.currentPage, this.perPage, this.filter)
-            this.$alert('Appointment Deleted Successfully')
+            this.getDataList(this.currentPage, this.perPage, this.filter)
+            this.$alert('Provider Deleted Successfully')
           })
           .catch(e => {
             this.errors.push(e)
           })
       })
-    },
-    sortlist (appointmentstatus) {
-      var list = {'value': appointmentstatus['id'], 'text': appointmentstatus['title']}
-      this.appointmentstatus.push(list)
-    },
-    testArrayModel: function () {
-      this.firstArray = {title: 'First Array', dataitems: {a: 1, b: 3}}
-      // debugger
-      this.$root.$emit('bv::show::modal', 'ArrayModel1')
-    },
-    getSelectedItem: function (myarg, item, index = 0) {
-      if (myarg !== 3) {
-        var url = 'https://app.evergenius.com/api/appointments/updatestatus/' + item.id
-        axios.put(url, {
-          auth_key: this.apiKey,
-          appointment_status: myarg,
-          appointment_id: item.id
-        })
-          .then(response => {
-            this.$alert('Appointment Status Updated Successfully')
-            this.getAppointmentData(this.currentPage, this.perPage, this.filter)
-          })
-          .catch(e => {
-            this.errors.push(e)
-          })
-      } else if (myarg === 3) {
-        // call to rescheduled method of addAppointment package
-        this.$refs.form.rescheduled(item.id)
-      }
     },
     dataPages () {
       let previousPages = []
@@ -390,8 +313,6 @@ export default {
   }
 }
 </script>
-<!--https://app.evergenius.com/api/contacts/search-contacts-->
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 
 .activeElement {

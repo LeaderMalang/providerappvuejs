@@ -9,7 +9,7 @@ import axios from 'axios'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import vSelect from 'vue-select'
-import AddAppointmentDefault from 'add-appointment'
+import AddProvider from './components/AddProvider'
 import VueSimpleAlert from 'vue-simple-alert'
 
 Vue.use(VueSimpleAlert)
@@ -38,7 +38,7 @@ new Vue({
   router,
   components: {
     App,
-    AddAppointmentDefault
+    AddProvider
   },
   template: '<App/>'
 }).$mount('#app')
