@@ -29,7 +29,7 @@
         </b-form-group>
       </b-col>
       <b-col lg="6" md="12" sm="12">
-        <AddProvider ref="form" :api-key-parent='apiKey' @my-custom-event="getDataList(currentPage, perPage, filter)" ></AddProvider>
+        <AddProvider ref="form" :token='token' @my-custom-event="getDataList(currentPage, perPage, filter)" ></AddProvider>
       </b-col>
     </div>
   <div class="mt-5 table-responsive-sm">
@@ -149,11 +149,12 @@ export default {
       currentPage: 1,
       perPage: 5,
       page: 1,
+      token: '',
       disableNext: false,
       disablePrevious: false,
       sortBy: '',
-      baseUrlLive: 'https://evergenius.staging.wishpond.com/',
-      baseUrlLocal: 'http://localhost:3000/',
+      // baseUrlLive: 'https://evergenius.staging.wishpond.com/',
+      baseUrl: 'http://localhost:3000/',
       sortDesc: false,
       sortDirection: 'asc',
       filter: null,
@@ -185,8 +186,26 @@ export default {
   created () {
     let uri = window.location.href.split('?')
     uri = uri[1].split('=')
-    this.apiKey = uri[1]
-    this.getDataList(this.currentPage, this.perPage, this.filter)
+    var companyName = uri[1]
+    this.apiKey = companyName
+    console.log(companyName)
+    // var data = {user_email: email, name: name, email: email, phone: '', site_url: '', country: '', state: '', city: '', address: '', user_password: 'aasd'}
+    if (companyName) {
+      var url = this.baseUrl + 'api/company-auth'
+      axios.get(url, {
+        params: {auth_key: this.apiKey}
+      })
+        .then(response => {
+          if (response.data.data.token) {
+            console.log(response)
+            this.token = response.data.data.token
+            this.getDataList(this.currentPage, this.perPage, this.filter)
+          }
+        })
+        .catch(e => {
+          this.errors.push(e)
+        })
+    }
   },
   methods: {
     getDataList (page, perPage, filter = '') {
@@ -198,9 +217,12 @@ export default {
       }
       var pPage = this.perPage
       this.showLoader = true
-      var url = this.baseUrlLive + 'api/users'
+      var url = this.baseUrl + 'api/users'
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer' + this.token
+      }
       axios.post(url, {
-        auth_key: this.apiKey,
         columns: [{data: 'id', name: '', orderable: true, search: { value: '', regex: false }, searchable: true},
           {data: null, name: '', orderable: true, search: { value: '', regex: false }, searchable: true},
           {data: null, name: '', orderable: true, search: { value: '', regex: false }, searchable: true},
@@ -210,6 +232,8 @@ export default {
         start: start,
         length: pPage,
         search: { value: filter, regex: false }
+      }, {
+        headers: headers
       })
         .then(response => {
           this.items = response.data.data
@@ -226,10 +250,14 @@ export default {
         })
     },
     getsingleDetails (contactid) {
-      var url = this.baseUrlLive + 'api/users/show/' + contactid
+      var url = this.baseUrl + 'api/users/show/' + contactid
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer' + this.token
+      }
       this.showModelLoader = true
       axios.get(url, {
-        params: {auth_key: this.apiKey}
+        headers: headers
       })
         .then(response => {
           this.contactDetails.content = response.data.data
@@ -254,8 +282,13 @@ export default {
     },
     deleteItem (item) {
       this.$confirm('Are you sure You want to Delete Provider?').then(() => {
-        var url = this.baseUrlLive + 'api/users/user/' + item.id
+        var url = this.baseUrl + 'api/users/user/' + item.id
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer' + this.token
+        }
         axios.delete(url, {
+          headers: headers,
           params: {
             auth_key: this.apiKey
           }

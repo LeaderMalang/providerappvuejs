@@ -56,25 +56,6 @@
               </div>
             </div>
 
-<!--            <div class="row">-->
-<!--              <div class="col-md-6">-->
-<!--                <div class="form-group">-->
-<!--                  <label for="phone">Gender</label>-->
-<!--                  <select name="gender" v-model="gender" class="form-control">-->
-<!--                    <option value="1">Male</option>-->
-<!--                    <option value="0">Female</option>-->
-<!--                  </select>-->
-<!--                </div>-->
-<!--              </div>-->
-<!--              <div class="col-md-6">-->
-<!--                <div class="form-group">-->
-<!--                  <label for="password">Password</label>-->
-<!--                  <input type="password" class="form-control" v-model="password" name="password" id="password" aria-describedby="emailHelp"-->
-<!--                         placeholder="Password">-->
-<!--                </div>-->
-<!--              </div>-->
-<!--            </div>-->
-
             <div class="row">
               <div class="col-12 mt-1">
                 <div v-if="errors.length" class="alert alert-danger alert-dismissible fade show">
@@ -103,6 +84,44 @@
       </form>
     </b-modal>
 
+    <b-modal id="modal-2" size="lg" title="Provider" :hide-footer="true">
+
+      <div class="row" >
+        <div class="col-md-6">
+          <div class="form-group">
+            <label>From Time</label>
+            <div>
+              <b-form-timepicker v-model="from_time" locale="en"></b-form-timepicker>
+            </div>
+
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label>To Time</label>
+            <div>
+              <b-form-timepicker v-model="to_time" locale="en"></b-form-timepicker>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <b-form-group label="Days:" v-slot="{ ariaDescribedby }">
+            <b-form-checkbox-group
+              id="checkbox-group-2"
+              v-model="selected"
+              :aria-describedby="ariaDescribedby"
+              name="flavour-2"
+              :options="options"
+            >
+            </b-form-checkbox-group>
+          </b-form-group>
+        </div>
+      </div>
+    </b-modal>
+
   </div>
 </template>
 <script>
@@ -115,8 +134,21 @@ export default {
   data () {
     return {
       apiKey: '',
-      baseUrlLive: 'https://evergenius.staging.wishpond.com/',
+      selected: [], // Must be an array reference!
+      options: [
+        { text: 'Monday', value: 'monday' },
+        { text: 'Tuesday', value: 'tuesday' },
+        { text: 'Wednesday', value: 'wednesday' },
+        { text: 'Thursday', value: 'thursday' },
+        { text: 'Friday', value: 'friday' },
+        { text: 'Saturday', value: 'saturday' },
+        { text: 'Sunday', value: 'sunday' }
+      ],
+      // baseUrlLive: 'https://evergenius.staging.wishpond.com/',
+      baseUrlLive: 'http://localhost:3000/',
       name: '',
+      from_time: '',
+      to_time: '',
       updateId: 0,
       email: '',
       phone: '',
@@ -129,15 +161,17 @@ export default {
       errors: []
     }
   },
-  props: [ 'showModelLoader', 'bus', 'apiKeyParent' ],
+  props: [ 'showModelLoader', 'bus', 'token' ],
   methods: {
     addProvider (e) {
-      this.apiKey = this.api_Key
-      console.log(this.apiKeyParent)
+      this.apiKey = this.token
       if (this.name && this.email && this.phone && this.city && this.country && this.state !== '') {
         var url = this.baseUrlLive + 'api/users/doctors'
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer' + this.token
+        }
         axios.post(url, {
-          auth_key: this.apiKey,
           name: this.name,
           email: this.email,
           phone: this.phone,
@@ -148,21 +182,24 @@ export default {
           password: null,
           hd_publish_status: 1,
           job_title: null
+        }, {
+          headers: headers
         })
           .then(response => {
             if (response.data.data) {
+              this.provider = response.data.data
+              this.$root.$emit('bv::hide::modal', 'modal-1')
               this.$alert('Provider Added Successfully')
+              this.$root.$emit('bv::show::modal', 'modal-2')
+              this.$emit('my-custom-event')
               // this.getDataList(this.currentPage, this.perPage, this.filter)
             }
             this.resetAll()
           })
-          .catch(function (error) {
-            if (error.response) {
-              alert('Server Error')
-            }
+          .catch(xhr => {
+            this.errors = []
+            this.errors.push(xhr.response.data.errors.message[0])
           })
-        this.$emit('my-custom-event')
-        this.$root.$emit('bv::hide::modal', 'modal-1')
         return true
       }
 
@@ -188,8 +225,12 @@ export default {
     },
     editForm (id) {
       var url = this.baseUrlLive + 'api/users/show/' + id
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer' + this.token
+      }
       axios.get(url, {
-        params: {auth_key: this.apiKey}
+        headers: headers
       })
         .then(response => {
           var resss = response.data.data
@@ -229,9 +270,14 @@ export default {
           country: this.country
         }
         var urlNew = this.baseUrlLive + 'api/users/show'
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer' + this.token
+        }
         axios.put(urlNew, {
-          data: data,
-          auth_key: this.apiKey
+          data: data
+        }, {
+          headers: headers
         })
           .then(response => {
             console.log(response)
