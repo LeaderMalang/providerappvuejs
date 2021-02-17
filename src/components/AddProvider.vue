@@ -9,15 +9,24 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="name">Name</label>
-                  <input type="text" class="form-control" v-model="name" name="name" id="name" aria-describedby="emailHelp"
+                  <input
+                    type="text"
+                    class="form-control"
+                    v-model="name" name="name" id="name" aria-describedby="emailHelp"
                          placeholder="Name">
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group">
                   <label for="email">Email</label>
-                  <input type="text" class="form-control" v-model="email" name="email" id="email" aria-describedby="emailHelp"
+                  <input type="email"
+                         v-bind:class="{'form-control':true, 'is-invalid' : !validEmail(email) && emailBlured}"
+                         v-on:blur="emailBlured = true"
+                         v-model="email"
+                         name="email"
+                         id="email" aria-describedby="emailHelp"
                          placeholder="Email">
+                  <div class="invalid-feedback">A valid email is required</div>
                 </div>
               </div>
             </div>
@@ -181,6 +190,8 @@ export default {
       to_time: '',
       updateId: 0,
       email: '',
+      emailBlured: false,
+      valid: false,
       phone: '',
       city: '',
       state: '',
@@ -195,6 +206,10 @@ export default {
   },
   props: [ 'showModelLoader', 'bus', 'token' ],
   methods: {
+    validEmail (email) {
+      var re = /(.+)@(.+){2,}\.(.+){2,}/
+      return re.test(email.toLowerCase())
+    },
     addProvider (e) {
       this.apiKey = this.token
       if (this.name && this.email && this.phone && this.city && this.country && this.state !== '') {
