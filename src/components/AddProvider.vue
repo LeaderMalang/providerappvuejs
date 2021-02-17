@@ -1,6 +1,6 @@
 <template>
   <div>
-    <b-button v-b-modal.modal-1 class="btn btn-primary float-right">Add Provider Local</b-button>
+    <b-button v-b-modal.modal-1 class="btn btn-primary float-right">Add Provider</b-button>
     <b-modal id="modal-1" size="lg" title="Provider" :hide-footer="true">
       <form class="mt-3">
         <div>
@@ -146,10 +146,7 @@
   </div>
 </template>
 <script>
-// import axios from 'axios'
 import axios from 'axios'
-// post
-// https://app.evergenius.com/api/celendars/set-default-weekschedule
 export default {
   name: 'AddAppointmentModel',
   components: {},
