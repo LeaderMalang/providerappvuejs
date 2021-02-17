@@ -362,7 +362,8 @@ button.page-link {
   background-color: gray;
 }
 .activbtn{
-  background-color: green;
+  background-color: #6c757d;
+  color: white !important;
 }
 button.page-link {
   font-size: 20px;

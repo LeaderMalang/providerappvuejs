@@ -1,6 +1,6 @@
 <template>
   <div>
-    <b-button v-b-modal.modal-1 class="btn btn-primary float-right">Add Provider</b-button>
+    <b-button v-b-modal.modal-1 @click="resetAll" class="btn btn-primary float-right">Add Provider</b-button>
     <b-modal id="modal-1" size="lg" title="Provider" :hide-footer="true">
       <form class="mt-3">
         <div>
@@ -307,6 +307,16 @@ export default {
       this.city = ''
       this.state = ''
       this.country = ''
+      this.from_time = ''
+      this.to_time = ''
+      this.updateId = 0
+      this.emailBlured = false
+      this.valid = false
+      this.password = ''
+      this.gender = 1
+      this.success = ''
+      this.errors = []
+      this.selDays = []
     },
     addCalender () {
       let setnew = {}
@@ -335,6 +345,7 @@ export default {
           }
           this.$root.$emit('bv::hide::modal', 'modal-2')
           this.$emit('my-custom-event')
+          this.resetAll()
         })
         .catch(e => {
           this.errors.push(e)
@@ -365,6 +376,7 @@ export default {
             console.log(response)
             if (response.data.data) {
               this.$alert('Provider Update Successfully')
+              this.resetAll()
             }
           })
           .catch(function (error) {
