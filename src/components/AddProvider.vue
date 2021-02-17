@@ -183,8 +183,8 @@ export default {
         { text: 'Saturday', value: 'saturday' },
         { text: 'Sunday', value: 'sunday' }
       ],
-      // baseUrlLive: 'https://evergenius.staging.wishpond.com/',
-      baseUrlLive: 'http://localhost:3000/',
+      baseUrlLive: 'https://evergenius.staging.wishpond.com/',
+      // baseUrlLive: 'http://localhost:3000/',
       name: '',
       from_time: '',
       to_time: '',
