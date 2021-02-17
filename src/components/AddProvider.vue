@@ -301,6 +301,8 @@ export default {
       for (var i = 0; i <= this.selectedDays.length - 1; i++) {
         setnew[this.selectedDays[i]] = true
       }
+      this.from_time = this.from_time.replace(/:[^:]*$/, '')
+      this.to_time = this.to_time.replace(/:[^:]*$/, '')
       var url = this.baseUrlLive + 'api/celendars/set-default-weekschedule'
       const headers = {
         'Content-Type': 'application/json',
