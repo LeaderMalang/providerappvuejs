@@ -85,41 +85,62 @@
     </b-modal>
 
     <b-modal id="modal-2" size="lg" title="Provider" :hide-footer="true">
+      <form class="mt-3">
+        <div class="row" >
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>From Time</label>
+              <div>
+                <b-form-timepicker v-model="from_time" locale="en"></b-form-timepicker>
+              </div>
 
-      <div class="row" >
-        <div class="col-md-6">
-          <div class="form-group">
-            <label>From Time</label>
-            <div>
-              <b-form-timepicker v-model="from_time" locale="en"></b-form-timepicker>
             </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>To Time</label>
+              <div>
+                <b-form-timepicker v-model="to_time" locale="en"></b-form-timepicker>
+              </div>
 
+            </div>
           </div>
         </div>
-        <div class="col-md-6">
-          <div class="form-group">
-            <label>To Time</label>
-            <div>
-              <b-form-timepicker v-model="to_time" locale="en"></b-form-timepicker>
-            </div>
-
+        <div class="row">
+          <div class="col-md-12">
+            <b-form-group label="Days:" v-slot="{ ariaDescribedby }">
+              <b-form-checkbox-group
+                id="checkbox-group-2"
+                v-model="selectedDays"
+                :aria-describedby="ariaDescribedby"
+                name="flavour-2"
+                :options="daysList"
+              >
+              </b-form-checkbox-group>
+            </b-form-group>
           </div>
         </div>
-      </div>
-      <div class="row">
+        <div class="row">
         <div class="col-md-12">
-          <b-form-group label="Days:" v-slot="{ ariaDescribedby }">
-            <b-form-checkbox-group
-              id="checkbox-group-2"
-              v-model="selected"
-              :aria-describedby="ariaDescribedby"
-              name="flavour-2"
-              :options="options"
-            >
-            </b-form-checkbox-group>
-          </b-form-group>
+          <b-form-group label="Radios using options" v-slot="{ ariaDescribedby }">
+          <b-form-radio-group
+            id="radio-group-1"
+            v-model="appLength"
+            :options="optionsTime"
+            :aria-describedby="ariaDescribedby"
+            name="radio-options"
+          ></b-form-radio-group>
+        </b-form-group>
         </div>
       </div>
+        <div class="row mt-1">
+          <div class="col-12">
+            <div class="float-right">
+              <input class="btn btn-primary" @click="addCalender" type="button" value="Save">
+            </div>
+          </div>
+        </div>
+      </form>
     </b-modal>
 
   </div>
@@ -127,15 +148,27 @@
 <script>
 // import axios from 'axios'
 import axios from 'axios'
-
+// post
+// https://app.evergenius.com/api/celendars/set-default-weekschedule
 export default {
   name: 'AddAppointmentModel',
   components: {},
   data () {
     return {
       apiKey: '',
-      selected: [], // Must be an array reference!
-      options: [
+      appLength: [],
+      optionsTime: [
+        {text: '30 Min', value: '30'},
+        {text: '45 Min', value: '45'},
+        {text: '1 Hour', value: '60'},
+        {text: '1.5 Hour', value: '90'},
+        {text: '2 Hour', value: '120'},
+        {text: '3 Hour', value: '180'},
+        {text: '4 Hour', value: '240'},
+        {text: '5 Hour', value: '300'}
+      ],
+      selectedDays: [], // Must be an array reference!
+      daysList: [
         { text: 'Monday', value: 'monday' },
         { text: 'Tuesday', value: 'tuesday' },
         { text: 'Wednesday', value: 'wednesday' },
@@ -158,7 +191,9 @@ export default {
       country: '',
       gender: 1,
       success: '',
-      errors: []
+      errors: [],
+      selDays: [],
+      newProvider: []
     }
   },
   props: [ 'showModelLoader', 'bus', 'token' ],
@@ -188,6 +223,9 @@ export default {
           .then(response => {
             if (response.data.data) {
               this.provider = response.data.data
+              this.newProvider = this.provider.company_doctors[this.provider.company_doctors.length - 1]
+              // this.newProvider = this.newProvider.company_doctors
+              console.log(this.newProvider)
               this.$root.$emit('bv::hide::modal', 'modal-1')
               this.$alert('Provider Added Successfully')
               this.$root.$emit('bv::show::modal', 'modal-2')
@@ -257,6 +295,36 @@ export default {
       this.city = ''
       this.state = ''
       this.country = ''
+    },
+    addCalender () {
+      let setnew = {}
+      for (var i = 0; i <= this.selectedDays.length - 1; i++) {
+        setnew[this.selectedDays[i]] = true
+      }
+      var url = this.baseUrlLive + 'api/celendars/set-default-weekschedule'
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer' + this.token
+      }
+      axios.post(url, {
+        app_length: this.appLength,
+        days: setnew,
+        time_from: this.from_time,
+        time_to: this.to_time,
+        user_id: this.newProvider.id
+      }, {
+        headers: headers
+      })
+        .then(response => {
+          if (response.status === 200) {
+            this.$alert('Calender Added Successfully')
+          }
+          this.$root.$emit('bv::hide::modal', 'modal-2')
+          this.$emit('my-custom-event')
+        })
+        .catch(e => {
+          this.errors.push(e)
+        })
     },
     updateProvider () {
       if (this.name && this.email && this.phone && this.city && this.country && this.state !== '') {
