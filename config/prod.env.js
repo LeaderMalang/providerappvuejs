@@ -2,5 +2,4 @@
 module.exports = {
   NODE_ENV: '"production"',
   BASE_URL: '"http://localhost:3000/"'
-  // BASE_URL: '"https://evergenius.staging.wishpond.com/"'
 }
